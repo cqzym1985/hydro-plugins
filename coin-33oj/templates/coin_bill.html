@@ -7,7 +7,7 @@
   <div class="medium-12 columns">
     <div class="section">
       <div class="section__header">
-        <h1 class="section__title">{{ uid }} 的发放记录</h1>
+        <h1 class="section__title">{% if udoc._id %}{{user.render_inline(udoc,badge=false) }}{% else %}{{ _('所有人') }}{% endif %}{{ _('的发放记录') }}</h1>
         <div class="section__tools"> 
           <a href="/coin/inc">
             <button class="primary rounded button">[SU]发放硬币</button>
@@ -38,19 +38,35 @@
             </colgroup>
             <thead>
               <tr>
-                <th class="col--time">时间</th>
-                <th class="col--uid">发放人的用户ID</th>
-                <th class="col--uid">接收者的用户ID</th>
-                <th class="col--amount">数额</th>
-                <th class="col--text">原因</th>
+                <th class="col--time">{{ _('Time') }}</th>
+                <th class="col--uid">{{ _('发放者') }}</th>
+                <th class="col--uid">{{ _('接收者') }}</th>
+                <th class="col--amount">{{ _('数额') }}</th>
+                <th class="col--text">{{ _('原因') }}</th>
               </tr>
             </thead>
             <tbody>
               {%- for bill in bills -%}
               <tr data-uid="{{ udoc.uid }}">
                 <td class="col--time">{{ datetimeSpan(bill._id)|safe }}</td>
-                <td class="col--uid">{{ bill.rootId }}</td>
-                <td class="col--uid">{{ bill.userId }}</td>
+                <td class="col--uid">
+    {% if handler.user.hasPerm(perm.PERM_VIEW_DISPLAYNAME) and users[bill.rootId].realname_name %}
+      {{ users[bill.rootId].realname_name }} ({{ users[bill.rootId].uname }})
+    {% elif handler.user.hasPerm(perm.PERM_VIEW_DISPLAYNAME) and users[bill.rootId].displayName and users[bill.rootId].displayName != users[bill.rootId].uname %}
+      {{ users[bill.rootId].displayName }} ({{ users[bill.rootId].uname }})
+    {% else %}
+      {{ users[bill.rootId].uname }}
+    {% endif %}
+ </td>
+                <td class="col--uid"><a href="/coin/bill/{{ bill.userId }}">
+    {% if handler.user.hasPerm(perm.PERM_VIEW_DISPLAYNAME) and users[bill.userId].realname_name %}
+      {{ users[bill.userId].realname_name }} ({{ users[bill.userId].uname }})
+    {% elif handler.user.hasPerm(perm.PERM_VIEW_DISPLAYNAME) and users[bill.userId].displayName and users[bill.userId].displayName != users[bill.userId].uname %}
+      {{ users[bill.userId].displayName }} ({{ users[bill.userId].uname }})
+    {% else %}
+      {{ users[bill.userId].uname }}
+    {% endif %}
+ </a></td>
                 <td class="col--amount">{{ bill.amount }}</td>
                 <td class="col--text">{{ bill.text }}</td>
               </tr>
