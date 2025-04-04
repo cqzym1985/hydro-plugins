@@ -1,12 +1,19 @@
 import {
-    db, definePlugin, UserModel, Handler, UserNotFoundError, NotFoundError, param, PermissionError, PRIV, Types,
+    db, definePlugin, UserModel, Handler, UserNotFoundError, NotFoundError, param, PermissionError, PRIV, Types, paginate, query
 } from 'hydrooj';
 
 class BadgeShowHandler extends Handler {
-    async get() {
-        const udocs = await UserModel.getMulti({ badge: { $exists: true, $ne: "" } }).toArray();
+    @query('page', Types.PositiveInt, true)
+    async get(domainId: string, page = 1) {
+        const [dudocs, upcount, ucount] = await paginate(
+            UserModel.getMulti({badge: { $exists: true, $ne: "" }}),
+	page,
+	100, 
+	);
+	const udict = await UserModel.getList(domainId, dudocs.map((x) => x._id));
+        const udocs = dudocs.map((x) => udict[x._id]);
         this.response.template = 'badge_show.html'; // 返回此页面
-        this.response.body = { udocs };
+        this.response.body = { udocs, upcount, ucount, page, udict };
     }
 }
 
@@ -22,7 +29,7 @@ class BadgeCreateHandler extends Handler {
         // 检查输入
         let udoc = await UserModel.getByUname(domainId, uidOrName);
         if (!udoc)
-            throw new NotFoundError(uidOrName);
+            throw new UserNotFoundError(uidOrName);
         text = text.replace('\'', '').replace('\"', '');
         if (!text)
             throw new NotFoundError('text');
@@ -37,11 +44,17 @@ class BadgeCreateHandler extends Handler {
 }
 
 class BadgeManageHandler extends Handler {
-    async get() {
-        // this.checkPriv(PRIV.PRIV_USER_PROFILE);
-        const udocs = await UserModel.getMulti({ badge: { $exists: true, $ne: "" } }).toArray();
+    @query('page', Types.PositiveInt, true)
+    async get(domainId: string, page = 1) {
+        const [dudocs, upcount, ucount] = await paginate(
+            UserModel.getMulti({badge: { $exists: true, $ne: "" }}),
+	page,
+	100, 
+	);
+	const udict = await UserModel.getList(domainId, dudocs.map((x) => x._id));
+        const udocs = dudocs.map((x) => udict[x._id]);
         this.response.template = 'badge_manage.html'; // 返回此页面
-        this.response.body = { udocs };
+        this.response.body = { udocs, upcount, ucount, page, udict };
     }
 }
 
