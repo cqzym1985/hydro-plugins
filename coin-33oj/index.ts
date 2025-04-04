@@ -30,25 +30,7 @@ async function inc(userId: number, rootId: number, amount: number, text: string)
         await UserModel.inc(userId, 'coin_all', amount);
 }
 
-async function billCount() {
-    return await coll.count();
-}
-
-async function getAll(ll: number, ss: number) {
-    return await coll.find().limit(ll).skip((ss - 1) * ll).sort({ _id: -1 }).toArray();
-}
-
-
-async function userBillCount(userId: number) {
-    return await coll.count({ "userId": userId });
-}
-
-
-async function getUser(userId: number, ll: number, ss: number) {
-    return await coll.find({ "userId": userId }).limit(ll).skip((ss - 1) * ll).sort({ _id: -1 }).toArray();
-}
-
-const coinModel = { inc, billCount, getAll, userBillCount, getUser };
+const coinModel = { inc };
 global.Hydro.model.coin = coinModel;
 
 //展示所有 
@@ -96,23 +78,23 @@ class CoinBillHandler extends Handler {
         //管理员能看所有，其他人只能看自己的
         if (uid != this.user._id)
             this.checkPriv(PRIV.PRIV_CREATE_DOMAIN);
-        //id 为 0 即查看所有人
-        if (uid == 0) {
-            let ucount = await coinModel.billCount();
-            let upcount = parseInt((ucount + 49) / 50);
-            const bills = await coinModel.getAll(50, page);
-            this.response.template = 'coin_bill.html'; // 返回此页面
-            this.response.body = { uid, bills, upcount, ucount, page };
-        }
-        else {
-            let ucount = await coinModel.userBillCount(uid);
-            let upcount = parseInt((ucount + 49) / 50);
-            const bills = await coinModel.getUser(uid, 50, page);
-            this.response.template = 'coin_bill.html'; // 返回此页面
-            this.response.body = { uid, bills, upcount, ucount, page };
-        }
+        // id 为 0 即查看所有人
+        let udoc = await UserModel.getById(domainId, uid);
+
+        let query = uid === 0 ? coll.find().sort({ _id: -1 }) : coll.find({ userId: uid }).sort({ _id: -1 });
+        const [bills, upcount, ucount] = await paginate(query, page, 100);
+
+        // 获取所有相关的用户信息
+        const userIds = bills.map(bill => bill.userId);
+        const rootIds = bills.map(bill => bill.rootId);
+        const uniqueUserIds = [...new Set([...userIds, ...rootIds])];
+        const users = await UserModel.getList(domainId, uniqueUserIds);
+
+        this.response.template = 'coin_bill.html'; // 返回此页面
+        this.response.body = { udoc, bills, upcount, ucount, page, users };
     }
 }
+
 
 // 配置项及路由
 export async function apply(ctx: Context) {
