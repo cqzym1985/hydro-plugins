@@ -2,32 +2,36 @@
 {% block coin_content %}
 <div class="section">
     <div class="section__header">
-        <h1 class="section__title">{{ _('coin_inc') }}</h1>
+        <h1 class="section__title">{{ _('coin_gift') }}</h1>
     </div>
     <div class="section__body">
+        <blockquote class="note typo">
+            <p>{{ _('⚠️警告：硬币一旦赠出将无法取消，请谨慎操作！') }}</p>
+        </blockquote>
         <form method="post">
+            {{ form.form_text({
+                label:'Current Password',
+                name:'password',
+                autofocus:true,
+                required:true,
+                type:'password'
+            }) }}
             {{ form.form_text({
                 label:'Username / UID',
                 name:'uidOrName',
-                autofocus:true,
                 required:true,
                 value:uidOrName
-                }) }}
+            }) }}
             {{ form.form_text({
-                label:'发放数量（负数即为扣除）',
+                label:'赠送数量',
                 name:'amount',
                 required:true,
                 type:'number'
-                }) }}
-            {{ form.form_text({
-                label:'发放原因',
-                name:'text',
-                required:true
-                }) }}
+            }) }}
             <div class="row">
                 <div class="columns">
                     <button type="submit" class="rounded primary button">
-                        {{ _('发放') }}
+                        {{ _('赠送') }}
                     </button>
                     <button type="button" class="rounded button" onclick="window.history.go(-1)">
                         {{ _('Cancel') }}
