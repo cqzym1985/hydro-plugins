@@ -1,0 +1,68 @@
+{% extends "layout/basic.html" %}
+{% block content %}
+<div class="row">
+  <div class="medium-12 columns">
+    <div class="section">
+      <div class="section__header">
+        <h1 class="section__title">{{ doc.title }}</h1>
+        <div class="section__tools">
+            <a class="rounded button" href="{{ url('paste_manage') }}">{{ _('管理剪贴板') }}</a>
+        </div>
+      </div>
+      <div class="section__body">
+        <ul class="supplementary list">
+          <li>
+            {{ user.render_inline(udoc) }}
+            @{{ datetimeSpan(doc.updateAt)|safe }}
+            {% if doc.isprivate %}
+              {{ _("私密") }}
+            {% else %}
+              {{ _("Public") }}
+            {% endif %}
+          </li>
+        </ul>
+
+        <div class="typo richmedia topic__content" data-emoji-enabled>
+          {{ doc.content|markdown|safe }}
+        </div>
+
+        <div style="padding:1.2rem 0;">
+          <h3>{{ _('剪贴板的原始内容') }}
+            <button onclick="toggleInfoView()" style="color:inherit;font-size:0.96rem;" id="view-info" status="collapse">
+              {{ _('View') }}
+            </button>
+          </h3>
+        </div>
+        <div class="code-toolbar" id="view-source" style="display:none;">
+          <pre class="syntax-hl language-markdown" tabindex="0"><code class="language-markdown" style="font-size:0.8em;">{{ doc.content | escape | safe }}</code></pre>
+        </div>
+        {% if handler.user._id == doc.owner or handler.user.hasPriv(PRIV.PRIV_ALL) %}
+        <ul class="section__footer supplementary dot list">
+          <li><a href="{{ url('paste_edit', { id: doc._id }) }}">
+            <span class="icon icon-edit"></span> {{ _('Edit') }}
+          </a></li>
+          <li><a href="javascript:;" data-copylink="{{ url('paste_detail', { id: doc._id }) }}">
+            <span class="icon icon-link"></span> {{ _('Share') }}
+          </a></li>
+        </ul>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleInfoView(){
+  var btn = jQuery.noConflict()("#view-info");
+  var source = jQuery.noConflict()("#view-source");
+  source.slideToggle();
+  if(btn.attr('status') == "collapse"){
+    btn.text("{{ _('收起') }}")
+    btn.attr('status', "open")
+  }else{
+    btn.text("{{ _('View') }}")
+    btn.attr('status', "collapse")
+  }
+}
+</script>
+{% endblock %}

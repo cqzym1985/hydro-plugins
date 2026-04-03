@@ -1,23 +1,25 @@
-{% set page_name = "新建剪贴板" %}
 {% extends "layout/basic.html" %}
 {% block content %}
 <div class="row">
   <div class="medium-9 columns">
     <div class="section">
+      <div class="section__header">
+        <h1 class="section__title">{{ _("paste_create") }}</h1>
+      </div>
       <div class="section__body">
         <form method="post">
           <div class="row">
             <div class="medium-10 columns">
               <label>
-                标题
-                <input name="title" placeholder="标题" class="textbox" autofocus>
+                {{ _('Title') }}
+                <input name="title" placeholder="{{ _('title') }}" class="textbox" autofocus>
               </label>
             </div>
-            <br>
             <div class="medium-2 columns">
               <label>
+                <br>
                 <label class="checkbox">
-                  <input type="checkbox" name="isprivate" value="on" class="checkbox"> 私有
+                  <input type="checkbox" name="isprivate"  value="on" class="checkbox" checked>{{ _('私密') }}
                 </label>
               </label>
             </div>
@@ -28,30 +30,28 @@
               columns:12,
               label:'Content',
               name:'content',
-              value:'',
+              value:'```cpp\n\n```',
               markdown:true,
               required:true,
               extra_style:'height: 500px',
               extra_textarea_class:'auto-resize'
               }) }}
             </div>
+            <div class="section__footer supplementary dot list">
+              我们会审查剪贴板内容，并对发布不合适内容的同学进行相应的处理
+            </div>
           </div>
-          <div class="row" style="margin-left: 5px; text-align: left;">
-            <input type="hidden" name="csrfToken" value="{{ handler.csrfToken }}">
+          <div class="row"><div class="columns">
             <button type="submit" class="rounded primary button">
-              新建剪贴板
+              {{ _('Create') }}
             </button>
-            <a href="/paste/manage" class="rounded button">
-              管理剪贴板
-            </a>
-          </div>
+            <button type="button" class="rounded button" onclick="window.history.go(-1)">
+              {{ _('Cancel') }}
+            </button>
+          </div></div>
         </form>
       </div>
     </div>
-  </div>
-  
-  <div class="medium-3 columns">
-    {% include 'components/md_hint.html' %}
   </div>
 </div>
 {% endblock %}
