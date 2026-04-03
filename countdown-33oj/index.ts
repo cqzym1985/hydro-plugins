@@ -1,48 +1,50 @@
-import { HomeHandler } from 'hydrooj/src/handler/home'
+import { Context, moment } from 'hydrooj'
 
-async function getCountdown(payload) {
-    function formatDate(date) {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    }
+export function apply(ctx: Context) {
+  ctx.server.applyMixin('HomeHandler', {
+    async getCountdown(domainId: string, payload: any) {
+      const content = [];
+      const dateToday = moment().startOf('day');
+      const dates = payload.dates;
 
-    function calculateDiffDays(targetDate) {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0); // 清除时间部分，只比较日期
-        
-        const timeDiff = targetDate.getTime() - today.getTime();
-        return Math.floor(timeDiff / (1000 * 60 * 60 * 24));
-    }
-
-    var content = new Array();
-    var dateToday = formatDate(new Date());
-    var dates = new Array(payload.dates);
-    dates = dates[0];
-    
-    dates.forEach(function(val, ind) {
-        if (content.length < payload['max_dates']) {
-            const targetDate = new Date(val.date);
-            targetDate.setHours(0, 0, 0, 0); // 清除时间部分
-            
-            const targetDateStr = formatDate(targetDate);
-            const todayDate = new Date(dateToday);
-            todayDate.setHours(0, 0, 0, 0);
-            
-            if (targetDate >= todayDate) {
-                var diffTime = calculateDiffDays(targetDate);
-                content.push({
-                    name: val.name,
-                    diff: diffTime
-                });
-            }
+      dates.forEach((val) => {
+        if (content.length < payload.max_dates) {
+          const targetDate = moment(val.date).startOf('day');
+          if (targetDate.isSameOrAfter(dateToday)) {
+            const diffTime = targetDate.diff(dateToday, 'days');
+            content.push({
+              name: val.name,
+              diff: diffTime,
+            });
+          }
         }
-    });
-    
-    payload.dates = content;
-    return payload;
-}
-HomeHandler.prototype.getCountdown = async (domainId, payload) => {
-    return await getCountdown(payload);
+      });
+
+      // 添加公历日期信息
+      const month = dateToday.month() + 1; // 月份 (0-11 → 1-12)
+      const day = dateToday.date();
+      const weekDays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+      const weekDay = weekDays[dateToday.day()];
+
+      // 中文月份名称
+      const chineseMonths = {
+        1: '一月大', 2: '二月平', 3: '三月大', 4: '四月小', 5: '五月大', 6: '六月小',
+        7: '七月大', 8: '八月大', 9: '九月小', 10: '十月大', 11: '十一月小', 12: '十二月大'
+      };
+
+      // 处理闰年
+      if (dateToday.isLeapYear()) {
+        chineseMonths[2] = '二月闰';
+      }
+
+      return {
+        dates: content,
+        calendar: {
+          month: chineseMonths[month],
+          day: day.toString().padStart(2, '0'),
+          week: weekDay,
+        },
+      };
+    },
+  });
 }
